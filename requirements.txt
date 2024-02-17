@@ -1,0 +1,7 @@
+Pillow
+numpy
+face-recognition
+opencv-python
+transformers
+tensorflow
+pytorch
