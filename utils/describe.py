@@ -44,18 +44,27 @@ def get_blip():
 
 
 def get_llava():
-    import torch
-
     # https://pytorch.org/get-started/locally/
 
     from transformers import pipeline
+    import torch
+    from transformers import BitsAndBytesConfig
 
     global __llava_captioner__
+
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16
+    )
+
     if __llava_captioner__ is None:
+        model_id = "llava-hf/llava-1.5-7b-hf"
+
         __llava_captioner__ = pipeline(
             "image-to-text",
-            model="liuhaotian/llava-v1.6-vicuna-7b",
+            model=model_id,
+            model_kwargs={"quantization_config": quantization_config},
         )
+
     return __llava_captioner__
 
 
@@ -87,8 +96,8 @@ def describe_image_blip(pil_image, *argv, **kwargs):
 
 
 def describe_image_llava(pil_image, prompt=""):
-    kwargs = {
-        "prompt": f"USER: <image>\n{prompt}\nASSISTANT:",
-        "max_new_tokens": 200,
-    }
-    return get_llava()(pil_image, **kwargs)[0]["generated_text"]
+    llava_prompt = f"USER: <image>\n{prompt}\nASSISTANT:"
+    outputs = get_llava()(
+        pil_image, prompt=llava_prompt, generate_kwargs={"max_new_tokens": 200}
+    )
+    return outputs[0]["generated_text"].split("ASSISTANT: ", 1)[1].strip()

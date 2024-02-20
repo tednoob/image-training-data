@@ -38,7 +38,6 @@ def crop_face(
 ) -> Optional[PIL.Image.Image]:
     height, width = rgb_image.shape[0], rgb_image.shape[1]
     top, right, bottom, left = face_location
-    print(top, bottom, left, right)
     fw = right - left
     fh = bottom - top
     cx = (left + right) / 2
@@ -57,13 +56,11 @@ def crop_face(
         left = max(0, ceil(cx - (bottom - top) / 2))
         right = min(width - 1, floor(cx + (bottom - top) / 2))
 
-    print(top, bottom, left, right)
 
     # No point cutting a too large of a picture from the whole image
     if (bottom - top) * (right - left) > max_image_ratio * height * width:
         return None
 
     crop_rgb_image = rgb_image[top:bottom, left:right]
-    print(crop_rgb_image.shape)
     crop_pil_image = PIL.Image.fromarray(crop_rgb_image)
     return crop_pil_image.resize((1024, 1024))

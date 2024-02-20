@@ -3,17 +3,18 @@ import face_recognition
 import PIL
 import numpy as np
 import hashlib
+from pathlib import Path
 
-from utils.describe import describe_image_blip
+from utils.describe import describe_image_llava
 from utils.crop import crop_body, crop_face
 
-
-# check if output dir exists, otherwise create it
-if not os.path.exists("output"):
-    os.makedirs("output")
-
-input_dir = "input"
-output_dir = "output"
+# mogrify -format jpg *.HEIC
+name = "Oskar"
+dir_name = name.lower().replace(" ", "_")
+input_dir = os.path.join("input", dir_name)
+output_dir = os.path.join("output", dir_name)
+if not os.path.exists(output_dir):
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
 target = face_recognition.load_image_file(os.path.join(input_dir, "target.jpg"))
 target_face = face_recognition.face_encodings(target)
 target_ident = hashlib.sha1(target.tobytes()).hexdigest()[:12]
@@ -30,15 +31,17 @@ for file_no, file in enumerate(os.listdir(input_dir)):
 
     if height > width:
         pil_image.resize((int(1024 * width / height), 1024)).save(
-            f"output/{file_no:02d}_full.jpg"
+            os.path.join(output_dir, f"{file_no:02d}_full.jpg")
         )
     else:
         pil_image.resize((1024, int(1024 * height / width))).save(
-            f"output/{file_no:02d}_full.jpg"
+            os.path.join(output_dir, f"{file_no:02d}_full.jpg")
         )
-    description = f"{target_ident} {describe_image_blip(pil_image)}"
-    with open(f"output/{file_no:02d}_full.txt", "w") as f:
-        f.write(description)
+
+    scene_description = describe_image_llava(pil_image, f"This is a picture of {name}. Describe the scene. Write a direct image prompt to create the image and refer to subject simply as {name}. Be brief and do not repeat yourself.")
+    full_description = f"{scene_description}"
+    with open(os.path.join(output_dir, f"{file_no:02d}_full.txt"), "w") as f:
+        f.write(full_description)
 
     # find all face locations in the image
     face_locations = face_recognition.face_locations(rgb_image)
@@ -60,9 +63,8 @@ for file_no, file in enumerate(os.listdir(input_dir)):
             body_crop_pil_image.save(
                 os.path.join(output_dir, f"{file_no:02d}_body.jpg")
             )
-            body_crop_description = (
-                f"{target_ident} {describe_image_blip(body_crop_pil_image)}"
-            )
+            body_description = describe_image_llava(body_crop_pil_image, f"This is {name}. What is {name} wearing, and how is their body shaped? Write a direct image prompt to create the image and refer to subject simply as {name}. Be brief and do not repeat yourself.")
+            body_crop_description = f"{body_description}"
             with open(os.path.join(output_dir, f"{file_no:02d}_body.txt"), "w") as f:
                 f.write(body_crop_description)
 
@@ -71,8 +73,7 @@ for file_no, file in enumerate(os.listdir(input_dir)):
             face_crop_pil_image.save(
                 os.path.join(output_dir, f"{file_no:02d}_face.jpg")
             )
-            face_crop_description = (
-                f"{target_ident} {describe_image_blip(face_crop_pil_image)}"
-            )
+            face_description = describe_image_llava(face_crop_pil_image, f"This is {name}. {name} is in the center of the picture. Describe their face and facial expression. Write a direct image prompt to create the image and refer to subject simply as {name}. Be brief and do not repeat yourself.")
+            face_crop_description = f"{face_description}"
             with open(os.path.join(output_dir, f"{file_no:02d}_face.txt"), "w") as f:
                 f.write(face_crop_description)
