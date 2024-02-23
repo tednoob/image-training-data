@@ -9,7 +9,7 @@ from utils.describe import describe_image_llava
 from utils.crop import crop_body, crop_face
 
 # mogrify -format jpg *.HEIC
-name = "Oskar"
+name = "Gabriel"
 dir_name = name.lower().replace(" ", "_")
 input_dir = os.path.join("input", dir_name)
 output_dir = os.path.join("output", dir_name)
@@ -18,7 +18,6 @@ if not os.path.exists(output_dir):
 target = face_recognition.load_image_file(os.path.join(input_dir, "target.jpg"))
 target_face = face_recognition.face_encodings(target)
 target_ident = hashlib.sha1(target.tobytes()).hexdigest()[:12]
-
 
 for file_no, file in enumerate(os.listdir(input_dir)):
     print(file)
@@ -38,8 +37,9 @@ for file_no, file in enumerate(os.listdir(input_dir)):
             os.path.join(output_dir, f"{file_no:02d}_full.jpg")
         )
 
-    scene_description = describe_image_llava(pil_image, f"This is a picture of {name}. Describe the scene. Write a direct image prompt to create the image and refer to subject simply as {name}. Be brief and do not repeat yourself.")
-    full_description = f"{scene_description}"
+    scene_description = describe_image_llava(pil_image, f"Describe this scene. Be brief and do not repeat yourself.")
+    full_description = f"{target_ident} {scene_description}"
+    print(full_description)
     with open(os.path.join(output_dir, f"{file_no:02d}_full.txt"), "w") as f:
         f.write(full_description)
 
@@ -63,8 +63,9 @@ for file_no, file in enumerate(os.listdir(input_dir)):
             body_crop_pil_image.save(
                 os.path.join(output_dir, f"{file_no:02d}_body.jpg")
             )
-            body_description = describe_image_llava(body_crop_pil_image, f"This is {name}. What is {name} wearing, and how is their body shaped? Write a direct image prompt to create the image and refer to subject simply as {name}. Be brief and do not repeat yourself.")
-            body_crop_description = f"{body_description}"
+            body_description = describe_image_llava(body_crop_pil_image, f"What is this person wearing? Write a direct image prompt to create the image. Be brief and do not repeat yourself.")
+            body_crop_description = f"{target_ident} {body_description}"
+            print(body_crop_description)
             with open(os.path.join(output_dir, f"{file_no:02d}_body.txt"), "w") as f:
                 f.write(body_crop_description)
 
@@ -73,7 +74,8 @@ for file_no, file in enumerate(os.listdir(input_dir)):
             face_crop_pil_image.save(
                 os.path.join(output_dir, f"{file_no:02d}_face.jpg")
             )
-            face_description = describe_image_llava(face_crop_pil_image, f"This is {name}. {name} is in the center of the picture. Describe their face and facial expression. Write a direct image prompt to create the image and refer to subject simply as {name}. Be brief and do not repeat yourself.")
-            face_crop_description = f"{face_description}"
+            face_description = describe_image_llava(face_crop_pil_image, f"Describe this persons face and facial expression. Be brief and do not repeat yourself.")
+            face_crop_description = f"{target_ident} {face_description}"
+            print(face_crop_description)
             with open(os.path.join(output_dir, f"{file_no:02d}_face.txt"), "w") as f:
                 f.write(face_crop_description)
