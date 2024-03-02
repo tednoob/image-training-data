@@ -1,0 +1,9 @@
+Pillow
+accelerate
+bitsandbytes
+numpy
+face-recognition
+opencv-python
+transformers
+tensorflow
+torch
